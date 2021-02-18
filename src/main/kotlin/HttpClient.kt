@@ -1,3 +1,6 @@
+import com.google.gson.Gson
+import com.google.gson.GsonBuilder
+import kotlinx.serialization.json.JsonBuilder
 import okhttp3.MediaType
 import okhttp3.MediaType.Companion.toMediaType
 import okhttp3.OkHttpClient
@@ -12,6 +15,7 @@ class HttpClient {
         val req = Request.Builder()
         val request = req.url(url).post(postJson.toRequestBody(JSON_TYPE)).build()
         val response = client.newCall(request).execute()
+
         return response.body!!.string()
     }
 }

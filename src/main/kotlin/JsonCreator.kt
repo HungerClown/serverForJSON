@@ -11,8 +11,29 @@ data class Params(val ObjectUIN: String, val ChangeDate: String,val UserName: St
 // Запрос к серверу
 @Serializable
 data class RequestToServer(val id: Int, val jsonRpc: String="2.0", val method: String,val params: Params, val version: Int)
+//Вложенность, нижний уровень
 @Serializable
-data class ItemsForList(val ElementName: String, val ElementID: Int, val ChangeDateTime: String)
+data class Root(
+    val result: Result
+)
+
+@Serializable
+data class Result(
+
+    @Serializable(with = dataListSerializer::class)
+    val datas: List<data> = arrayListOf()
+)
+
+@Serializable
+data class data(val ElementName: String, val ElementID: String, val ChangeDate: String)
+
+object dataListSerializer: JsonTransformingSerializer<List<data>>(ListSerializer(data.serializer())) {
+    // If response is not an array, then it is a single object that should be wrapped into the array
+    override fun transformDeserialize(element: JsonElement): JsonElement =
+        if (element !is JsonArray) JsonArray(listOf(element)) else element
+}
+
+
 
 class JsonCreator {
     private fun createTestJson(): String{
@@ -34,23 +55,15 @@ class JsonCreator {
         return  createRequestToServer()
     }
 
-    fun jsonArrayParams() {
-        val itemsForList = ItemsForList()
-        val element = buildJsonObject {
-            putJsonArray("data") {
-                addJsonObject {
-                    put("ElementName", itemsForList.ElementName)
-                }
-                addJsonObject {
-                    put("ElementID", itemsForList.ElementID)
-                }
-                addJsonObject {
-                    put("ChangeDateTime", itemsForList.ChangeDateTime)
-                }
-            }
-        }
-        print(element)
-        //return Json.decodeFromString(element.toString())
+//работа с вложенностью
+    fun modelToJson(): String{
+        var otvet = Result()
+
+        otvet.datas.plus(data("Barsik", "eee", "2023.30.39"))
+        otvet.datas.plus(data("Murka", "eee", "2023.12.39"))
+        var root = Root( otvet)
+
+        return Json.encodeToString(root)
     }
 
 }
